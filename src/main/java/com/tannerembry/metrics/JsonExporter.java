@@ -33,10 +33,19 @@ public class JsonExporter {
 
         List<PaypalPurchase> allPurchases = MailInitializer.getAllPurchases(service, "me", query);
 
+//        double totalMoney = 0;
+//        for(PaypalPurchase purchase : allPurchases){
+//            totalMoney += purchase.getAmount();
+//        }
+//
+//        System.out.println(totalMoney);
+
         exportMonthlyData(allPurchases);
         exportClockData(allPurchases);
         exportDayData(allPurchases);
         exportEmailData(allPurchases);
+        //exportDaysByMonthData(allPurchases);
+        exportScatterData(allPurchases);
     }
 
     private static void exportMonthlyData(List<PaypalPurchase> purchases) {
@@ -333,7 +342,7 @@ public class JsonExporter {
             otherColumn.add("other");
 
             for(String key : emailDownloads.keySet()){
-                if(key.equals("other") || emailDownloads.get(key) < 2)
+                if(key.equals("other") || emailDownloads.get(key) < 3)
                     otherColumn.add(emailDownloads.get(key));
                 else {
                     JSONArray emailColumn = new JSONArray();
@@ -342,6 +351,200 @@ public class JsonExporter {
                 }
             }
             json.put("other", otherColumn);
+
+            FileWriter file = new FileWriter(jsonFile);
+            file.write(json.toJSONString());
+            file.flush();
+            file.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void exportDaysByMonthData(List<PaypalPurchase> purchases) {
+        try {
+            File jsonFile = new File(exportDirectory, "purchases_day_by_month.json");
+            if (!jsonFile.exists())
+                jsonFile.createNewFile();
+
+            //format JSON as shown in this example: http://c3js.org/samples/timeseries.html
+
+            JSONObject json = new JSONObject();
+
+            JSONArray dateColumn = new JSONArray();
+            JSONArray monColumn = new JSONArray();
+            JSONArray tuesColumn = new JSONArray();
+            JSONArray wedColumn = new JSONArray();
+            JSONArray thursColumn = new JSONArray();
+            JSONArray friColumn = new JSONArray();
+            JSONArray satColumn = new JSONArray();
+            JSONArray sunColumn = new JSONArray();
+
+            //aggregate all purchases by month and count total
+            HashMap<String, Integer> monDownloads = new HashMap<String, Integer>();
+            HashMap<String, Integer> tuesDownloads = new HashMap<String, Integer>();
+            HashMap<String, Integer> wedDownloads = new HashMap<String, Integer>();
+            HashMap<String, Integer> thursDownloads = new HashMap<String, Integer>();
+            HashMap<String, Integer> friDownloads = new HashMap<String, Integer>();
+            HashMap<String, Integer> satDownloads = new HashMap<String, Integer>();
+            HashMap<String, Integer> sunDownloads = new HashMap<String, Integer>();
+
+            for(PaypalPurchase purchase : purchases){
+                DateFormat targetFormat = new SimpleDateFormat("MM-yyyy");
+                String formattedDate = targetFormat.format(purchase.getDate());
+
+                if(!dateColumn.contains(formattedDate))
+                    dateColumn.add(formattedDate);
+
+                Calendar c = Calendar.getInstance();
+                c.setTime(purchase.getDate());
+                int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
+
+                switch (dayOfWeek){
+                    case 1:
+                        incrementDownloads(sunDownloads, formattedDate);
+                        break;
+                    case 2:
+                        incrementDownloads(monDownloads, formattedDate);
+                        break;
+                    case 3:
+                        incrementDownloads(tuesDownloads, formattedDate);
+                        break;
+                    case 4:
+                        incrementDownloads(wedDownloads, formattedDate);
+                        break;
+                    case 5:
+                        incrementDownloads(thursDownloads, formattedDate);
+                        break;
+                    case 6:
+                        incrementDownloads(friDownloads, formattedDate);
+                        break;
+                    case 7:
+                        incrementDownloads(satDownloads, formattedDate);
+                        break;
+                }
+            }
+
+            ListIterator<String> dateIterator = dateColumn.listIterator();
+
+            while(dateIterator.hasNext()){
+                String date = dateIterator.next();
+
+                if(monDownloads.containsKey(date))
+                    monColumn.add(monDownloads.get(date));
+                else
+                    monColumn.add(null);
+
+                if(tuesDownloads.containsKey(date))
+                    tuesColumn.add(tuesDownloads.get(date));
+                else
+                    tuesColumn.add(null);
+
+                if(wedDownloads.containsKey(date))
+                    wedColumn.add(wedDownloads.get(date));
+                else
+                    wedColumn.add(null);
+
+                if(thursDownloads.containsKey(date))
+                    thursColumn.add(thursDownloads.get(date));
+                else
+                    thursColumn.add(null);
+
+                if(friDownloads.containsKey(date))
+                    friColumn.add(friDownloads.get(date));
+                else
+                    friColumn.add(null);
+
+                if(satDownloads.containsKey(date))
+                    satColumn.add(satDownloads.get(date));
+                else
+                    satColumn.add(null);
+
+                if(sunDownloads.containsKey(date))
+                    sunColumn.add(sunDownloads.get(date));
+                else
+                    sunColumn.add(null);
+            }
+
+            json.put("x", dateColumn);
+            json.put("Monday", monColumn);
+            json.put("Tuesday", tuesColumn);
+            json.put("Wednesday", wedColumn);
+            json.put("Thursday", thursColumn);
+            json.put("Friday", friColumn);
+            json.put("Saturday", satColumn);
+            json.put("Sunday", sunColumn);
+
+            FileWriter file = new FileWriter(jsonFile);
+            file.write(json.toJSONString());
+            file.flush();
+            file.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void incrementDownloads(HashMap<String, Integer> dayDownloads, String formattedDate) {
+        if (dayDownloads.containsKey(formattedDate)) {
+            int downloads = dayDownloads.get(formattedDate);
+            dayDownloads.put(formattedDate, downloads+1);
+        } else {
+            dayDownloads.put(formattedDate, 1);
+        }
+    }
+
+    private static void exportScatterData(List<PaypalPurchase> purchases) {
+        try {
+            File jsonFile = new File(exportDirectory, "purchases_all.json");
+            if (!jsonFile.exists())
+                jsonFile.createNewFile();
+
+            //format JSON as shown in this example: http://c3js.org/samples/timeseries.html
+
+            JSONObject json = new JSONObject();
+
+            JSONArray shopXColumn = new JSONArray();
+            JSONArray shopColumn = new JSONArray();
+            JSONArray machinesColumn = new JSONArray();
+            JSONArray machinesXColumn = new JSONArray();
+            JSONArray arathiColumn = new JSONArray();
+            JSONArray arathiXColumn = new JSONArray();
+
+            for(PaypalPurchase purchase : purchases){
+                DateFormat targetFormat = new SimpleDateFormat("MM-dd-yyyy");
+                String formattedDate = targetFormat.format(purchase.getDate());
+
+                Calendar c = Calendar.getInstance();
+                c.setTime(purchase.getDate());
+                int hour = c.get(Calendar.HOUR_OF_DAY);
+                int minute = c.get(Calendar.MINUTE);
+                double plotMinute = minute / 60;
+                double plotTime = hour + plotMinute;
+
+                switch (purchase.getResource()){
+                    case SHOP:
+                        shopColumn.add(plotTime);
+                        shopXColumn.add(formattedDate);
+                        break;
+                    case MACHINES:
+                        machinesColumn.add(plotTime);
+                        machinesXColumn.add(formattedDate);
+                        break;
+                    case ARATHI_BASIN:
+                        arathiColumn.add(plotTime);
+                        arathiXColumn.add(formattedDate);
+                        break;
+                }
+            }
+
+            json.put("shop", shopColumn);
+            json.put("shop_x", shopXColumn);
+            json.put("machines", machinesColumn);
+            json.put("machines_x", machinesXColumn);
+            json.put("arathi", arathiColumn);
+            json.put("arathi_x", arathiXColumn);
 
             FileWriter file = new FileWriter(jsonFile);
             file.write(json.toJSONString());
