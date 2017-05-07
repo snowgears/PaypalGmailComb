@@ -26,6 +26,10 @@ public class JsonExporter {
         } catch(Exception e){
             exportDirectory = new File(System.getProperty("user.dir"));
         }
+
+        long startTime = System.currentTimeMillis();
+        System.out.println("Scanning inbox for PayPal receipts. This may take a few minutes...");
+
         // Build a new authorized API client service.
         Gmail service = MailInitializer.getGmailService();
 
@@ -33,12 +37,39 @@ public class JsonExporter {
 
         List<PaypalPurchase> allPurchases = MailInitializer.getAllPurchases(service, "me", query);
 
-//        double totalMoney = 0;
+        //Since PayPal changed the way that purchase notifications were sent and formatted, this covers the new way that
+        String query2 = "in:inbox from:(service@paypal.com) subject:(payment received)";
+
+        List<PaypalPurchase> allPurchases2 = MailInitializer.getAllPurchases(service, "me", query2);
+
+        //System.out.println(allPurchases.size());
+//        int badCount = 0;
+//        int goodCount = 0;
 //        for(PaypalPurchase purchase : allPurchases){
-//            totalMoney += purchase.getAmount();
+//            if(purchase != null) {
+//                //System.out.println(purchase.toString());
+//                goodCount++;
+//            }
+//            else
+//                badCount++;
 //        }
-//
-//        System.out.println(totalMoney);
+        //System.out.println("Total null parses: "+badCount);
+        //System.out.println("Total okay (but not necessarily correct) parses: "+goodCount);
+
+        allPurchases.addAll(allPurchases2);
+        Collections.sort(allPurchases);
+
+        long endTime = System.currentTimeMillis();
+        long totalSeconds = (endTime - startTime) / 1000;
+        double totalMinutes = totalSeconds / 60;
+        System.out.println("Compiled all PayPal receipts (found "+ allPurchases.size() +" in total). Job finished in "+(int)totalSeconds+" seconds.");
+
+        double totalMoney = 0;
+        for(PaypalPurchase purchase : allPurchases){
+            totalMoney += purchase.getAmount();
+        }
+
+        System.out.println("Cumulative income from all purchases: $"+totalMoney);
 
         exportMonthlyData(allPurchases);
         exportClockData(allPurchases);

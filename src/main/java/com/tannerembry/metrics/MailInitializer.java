@@ -15,11 +15,8 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.*;
 import com.google.api.services.gmail.Gmail;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.*;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -59,6 +56,9 @@ public class MailInitializer {
             System.exit(1);
         }
     }
+
+    private static int CURRENT_YEAR = 0;
+    private static int CURRENT_MONTH = 0;
 
     /**
      * Creates an authorized Credential object.
@@ -112,8 +112,13 @@ public class MailInitializer {
      * @param query String used to filter the Messages listed.
      * @throws IOException
      */
-    public static List<PaypalPurchase> getAllPurchases(Gmail service, String userId,
-                                                          String query) throws IOException {
+    public static List<PaypalPurchase> getAllPurchases(Gmail service, String userId, String query) throws IOException {
+
+        Calendar c = Calendar.getInstance();
+        CURRENT_YEAR = c.get(Calendar.YEAR);
+        CURRENT_MONTH = c.get(Calendar.MONTH);
+
+
         List<PaypalPurchase> allPurchases = new ArrayList<PaypalPurchase>();
         ListMessagesResponse response = service.users().messages().list(userId).setQ(query).execute();
 
@@ -129,22 +134,53 @@ public class MailInitializer {
             }
         }
 
+        PaypalPurchase purchase;
+        SimpleDateFormat parserSDF = new SimpleDateFormat("MMM d, yyyy HH:mm:ss zzz");
+
+        System.out.println("Number of messages: "+messages.size());
+
+        //System.out.println("\n\nNULL PURCHASE MESSAGE DATES:");
+
         for(Message message : messages) {
             Message m = service.users().messages().get(userId, message.getId()).execute();
 
-            //this message part is what contains all paypal information
-            MessagePart part = m.getPayload().getParts().get(0);
-
-            //need to decode the actual body of the message
-            byte[] decoded = Base64.decodeBase64(part.getBody().toString());
-            String actual = new String(decoded, "UTF8");
-
             //use the decoded string and parse out all necessary data
-            PaypalPurchase purchase = PaypalPurchase.parse(actual);
-            allPurchases.add(purchase);
+            purchase = PaypalPurchase.parse(m);
+
+
+            Date date = new Date(m.getInternalDate());
+            String strDate = parserSDF.format(date);
+
+            //TODO there are still 11 total misparsed emails ranging from Feb 2017 - Oct 2016 due to cut off message body for seemingly no reason
+//            if(purchase == null){
+//                System.out.println("\t"+strDate);
+//            }
+
+            if(purchase != null && !purchaseIsCurrentMonth(purchase)) {
+                allPurchases.add(purchase);
+            }
         }
+        System.out.println("");
 
         return allPurchases;
+    }
+
+    private static boolean purchaseIsCurrentMonth(PaypalPurchase purchase){
+        if(purchase != null){
+            SimpleDateFormat parserSDF = new SimpleDateFormat("MMM d, yyyy HH:mm:ss zzz");
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(purchase.getDate());
+            int month = cal.get(Calendar.MONTH);
+            int year = cal.get(Calendar.YEAR);
+
+            if(month == CURRENT_MONTH && year == CURRENT_YEAR) {
+                String strDate = parserSDF.format(purchase.getDate());
+                System.out.println("\tExcluding Purchase: "+strDate);
+                return true;
+            }
+        }
+        return false;
     }
 
 }
