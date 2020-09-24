@@ -1,5 +1,5 @@
 .DS_Store
-client_secret.json
+*.json
 .idea/
 ZZJsonExporter.iml
 target/

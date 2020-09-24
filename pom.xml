@@ -15,24 +15,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client</artifactId>
-            <version>1.20.0</version>
+            <groupId>com.paypal.sdk</groupId>
+            <artifactId>paypal-core</artifactId>
+            <version>1.7.2</version>
         </dependency>
         <dependency>
-            <groupId>com.google.apis</groupId>
-            <artifactId>google-api-services-gmail</artifactId>
-            <version>v1-rev48-1.20.0</version>
+            <groupId>com.paypal.sdk</groupId>
+            <artifactId>payouts-sdk</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client-java6</artifactId>
-            <version>1.11.0-beta</version>
+            <groupId>org.json</groupId>
+            <artifactId>org.json</artifactId>
+            <version>chargebee-1.0</version>
         </dependency>
         <dependency>
-            <groupId>com.google.oauth-client</groupId>
-            <artifactId>google-oauth-client-jetty</artifactId>
-            <version>1.11.0-beta</version>
+            <groupId>com.squareup.okhttp</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>

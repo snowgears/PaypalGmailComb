@@ -1,6 +1,5 @@
 package com.tannerembry.metrics;
 
-import com.google.api.services.gmail.Gmail;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -28,19 +27,14 @@ public class JsonExporter {
         }
 
         long startTime = System.currentTimeMillis();
-        System.out.println("Scanning inbox for PayPal receipts. This may take a few minutes...");
 
-        // Build a new authorized API client service.
-        Gmail service = MailInitializer.getGmailService();
-
-        String query = "in:inbox from:(member@paypal.com) subject:(Notification of payment received)";
-
-        List<PaypalPurchase> allPurchases = MailInitializer.getAllPurchases(service, "me", query);
+        PaypalInitializer paypalInitializer = new PaypalInitializer();
+        List<PaypalPurchase> allPurchases = paypalInitializer.getAllPurchases();
 
         //Since PayPal changed the way that purchase notifications were sent and formatted, this covers the new way that
-        String query2 = "in:inbox from:(service@paypal.com) subject:(payment received)";
+        //String query2 = "in:inbox from:(service@paypal.com) subject:(payment received)";
 
-        List<PaypalPurchase> allPurchases2 = MailInitializer.getAllPurchases(service, "me", query2);
+        //List<PaypalPurchase> allPurchases2 = MailInitializer.getAllPurchases(service, "me", query2);
 
         //System.out.println(allPurchases.size());
 //        int badCount = 0;
@@ -56,7 +50,7 @@ public class JsonExporter {
         //System.out.println("Total null parses: "+badCount);
         //System.out.println("Total okay (but not necessarily correct) parses: "+goodCount);
 
-        allPurchases.addAll(allPurchases2);
+        //allPurchases.addAll(allPurchases2);
         Collections.sort(allPurchases);
 
         long endTime = System.currentTimeMillis();
