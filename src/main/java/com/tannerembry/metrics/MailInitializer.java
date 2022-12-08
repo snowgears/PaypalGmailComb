@@ -20,7 +20,8 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class MailInitializer {
+public class
+MailInitializer {
     /** Application name. */
     private static final String APPLICATION_NAME =
             "Gmail API Java Quickstart";
@@ -117,7 +118,6 @@ public class MailInitializer {
         Calendar c = Calendar.getInstance();
         CURRENT_YEAR = c.get(Calendar.YEAR);
         CURRENT_MONTH = c.get(Calendar.MONTH);
-
 
         List<PaypalPurchase> allPurchases = new ArrayList<PaypalPurchase>();
         ListMessagesResponse response = service.users().messages().list(userId).setQ(query).execute();

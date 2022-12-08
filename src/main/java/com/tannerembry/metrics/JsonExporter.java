@@ -7,9 +7,11 @@ import org.json.simple.JSONObject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 
 /**
  * This class gets an initialized mail instance and then exports the different json files.
@@ -18,7 +20,15 @@ public class JsonExporter {
 
     private static File exportDirectory;
 
+    private static String DB_URL; //fill in info here or load from config
+    private static String DB_USERNAME; //fill in info here or load from config
+    private static String DB_PASSWORD; //fill in info here or load from config
+
     public static void main(String[] args) throws IOException {
+
+//        PaypalPurchase purchase = new PaypalPurchase("test", "test@gmail.com", "11111111", "test", new Date(), PaypalPurchase.ResourceType.SHOP, 0.0);
+//        insertRecord(purchase);
+
         try {
             exportDirectory = new File(args[0]);
             if(!exportDirectory.exists())
@@ -71,12 +81,41 @@ public class JsonExporter {
 
         System.out.println("Cumulative income from all purchases: $"+totalMoney);
 
-        exportMonthlyData(allPurchases);
-        exportClockData(allPurchases);
-        exportDayData(allPurchases);
-        exportEmailData(allPurchases);
+        try {
+            Connection connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
+
+            for(PaypalPurchase purchase : allPurchases){
+                insertRecord(connection, purchase);
+            }
+            connection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        //exportMonthlyData(allPurchases);
+        //exportClockData(allPurchases);
+        //exportDayData(allPurchases);
+        //exportEmailData(allPurchases);
         //exportDaysByMonthData(allPurchases);
-        exportScatterData(allPurchases);
+        //exportScatterData(allPurchases);
+    }
+
+    public static void insertRecord(Connection connection, PaypalPurchase purchase) {
+        String insertPayment = "insert into resource_purchase (ts_purchased, resource_id, price, email, server_id) values (?, ?, ?, ?, 868241175688151051)";
+
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(insertPayment);
+            preparedStatement.setTimestamp(1, new Timestamp(purchase.getDate().getTime()));
+            preparedStatement.setInt(2, purchase.getResource().getInt());
+            preparedStatement.setDouble(3, purchase.getAmount());
+            preparedStatement.setString(4, purchase.getBuyerEmail());
+
+            // Step 3: Execute the query or update query
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void exportMonthlyData(List<PaypalPurchase> purchases) {

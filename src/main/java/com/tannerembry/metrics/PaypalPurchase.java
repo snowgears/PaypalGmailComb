@@ -18,7 +18,7 @@ public class PaypalPurchase implements Comparable<PaypalPurchase>{
     private Date purchaseDate;
     private double amount;
 
-    private PaypalPurchase(String buyerName, String buyerEmail, String transactionID, String spigotName, Date date, ResourceType resource, double amount){
+    public PaypalPurchase(String buyerName, String buyerEmail, String transactionID, String spigotName, Date date, ResourceType resource, double amount){
         this.buyerName = buyerName;
         this.buyerEmail = buyerEmail;
         this.transactionID = transactionID;
@@ -188,7 +188,13 @@ public class PaypalPurchase implements Comparable<PaypalPurchase>{
             return null;
         }
 
-        transactionID = purchase.substring(startTrans+1, endTrans);
+        try {
+            transactionID = purchase.substring(startTrans + 1, endTrans);
+        } catch (StringIndexOutOfBoundsException e){
+            //System.out.println(transactionID);
+            System.out.println(new Date(message.getInternalDate()).toString());
+            System.out.println("---------------------------------------------------------------");
+        }
 
         //parse out buyer name
         int nameIndex = purchase.indexOf("<!-- EmailContentSellerBuyerDetails");
@@ -315,6 +321,18 @@ public class PaypalPurchase implements Comparable<PaypalPurchase>{
                 return ARATHI_BASIN;
             }
             return null;
+        }
+
+        public int getInt(){
+            switch (this){
+                case SHOP:
+                    return 9628;
+                case MACHINES:
+                    return 23357;
+                case ARATHI_BASIN:
+                    return 27977;
+            }
+            return 0;
         }
     }
 
